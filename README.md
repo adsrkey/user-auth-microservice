@@ -1,7 +1,7 @@
 # Authentication microservice
 
 ## Structure
-
+    .
     ├── deploy
     ├── pkg               
     │   ├── store        
@@ -10,29 +10,28 @@
     │   │   └── transaction
     │   └── type
     │
-    ├── service
-    │   └── auth
-    │       ├── cmd
-    │       │   └── app
-    │       ├── configs
-    │       ├── internal
-    │       │   ├── delivery
-    │       │   │   └── http
-    │       │   │       ├── cookie
-    │       │   │       └── validator
-    │       │   │           └── auth
-    │       │   ├── domain
-    │       │   │   └── user
-    │       │   ├── repository
-    │       │   │   └── storage
-    │       │   │       └── postgres
-    │       │   │           ├── dao
-    │       │   │           └── migrations
-    │       │   └── usecase
-    │       │       ├── adapters
-    │       │       │    └── storage
-    │       │       └── user
-    │       ├── proto
-    │       └── utils
-    │            └── jwt
-    └── ...
+    └── service
+        └── auth
+            ├── cmd
+            │   └── app
+            ├── configs
+            ├── internal
+            │   ├── delivery
+            │   │   └── http
+            │   │       ├── cookie
+            │   │       └── validator
+            │   │           └── auth
+            │   ├── domain
+            │   │   └── user
+            │   ├── repository
+            │   │   └── storage
+            │   │       └── postgres
+            │   │           ├── dao
+            │   │           └── migrations
+            │   └── usecase
+            │       ├── adapters
+            │       │    └── storage
+            │       └── user
+            ├── proto
+            └── utils
+                └── jwt
