@@ -5,7 +5,6 @@ import (
 	"auth-service/service/auth/internal/delivery/http"
 	repository "auth-service/service/auth/internal/repository/storage/postgres"
 	"auth-service/service/auth/internal/usecase/user"
-	utils "auth-service/service/auth/utils/jwt"
 	"github.com/labstack/echo/v4"
 	"log"
 )
@@ -22,12 +21,7 @@ func main() {
 		return
 	}
 
-	jwtWrapper := &utils.JwtWrapper{
-		SecretKey:       "key",
-		Issuer:          "",
-		ExpirationHours: 24,
-	}
-	ucUser := user.New(repo, jwtWrapper)
+	ucUser := user.New(repo)
 
 	e := echo.New()
 
