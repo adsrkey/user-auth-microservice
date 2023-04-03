@@ -8,14 +8,9 @@ import (
 
 type User interface {
 	UserAuth
-	JWT
 }
 
 type UserAuth interface {
 	Auth(c context.Context, user *user.User) (*utils.SignedToken, error)
 	Register(c context.Context, user *user.User) error
-}
-
-type JWT interface {
-	JwtWrapper() *utils.JwtWrapper
 }

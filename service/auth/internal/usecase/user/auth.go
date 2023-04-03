@@ -22,7 +22,13 @@ func (uc *UseCase) Auth(c context.Context, user *user.User) (*utils.SignedToken,
 		return nil, err
 	}
 
-	token, err := uc.JwtWrapper().GenerateToken(ucUser)
+	jwtWrapper := &utils.JwtWrapper{
+		SecretKey:       "key",
+		Issuer:          "",
+		ExpirationHours: 24,
+	}
+
+	token, err := jwtWrapper.GenerateToken(ucUser)
 	if err != nil {
 		return nil, err
 	}
