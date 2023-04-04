@@ -1,5 +1,29 @@
 # Authentication microservice
 
+# Endpoints
+
+### cURL examples:
+
+#### /api/v1/reg - registration
+```
+curl --location 'http://localhost:8080/api/v1/reg' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "email": "test@test.com",
+    "password": "test"
+}'
+```
+
+#### /api/v1/reg - registration
+```
+curl --location 'http://localhost:8080/api/v1/auth' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "email": "test@test.com",
+    "password": "test"
+}'
+```
+
 ## Structure
     .
     ├── deploy
@@ -20,14 +44,14 @@
             │   │   └── http
             │   │       ├── cookie
             │   │       └── validator
-            │   │           └── auth
             │   ├── domain
             │   │   └── user
             │   ├── repository
             │   │   └── storage
             │   │       └── postgres
             │   │           ├── dao
-            │   │           └── migrations
+            │   │           ├── migrations
+            │   │           └── worker
             │   └── usecase
             │       ├── adapters
             │       │    └── storage
