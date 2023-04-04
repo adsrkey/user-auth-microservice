@@ -2,8 +2,10 @@ package utils
 
 import (
 	"auth-service/service/auth/internal/repository/storage/postgres/dao"
+	"crypto/rand"
 	"errors"
 	"github.com/google/uuid"
+	"io"
 	"time"
 
 	"github.com/golang-jwt/jwt"
@@ -27,8 +29,12 @@ type SignedToken struct {
 }
 
 func (w *JwtWrapper) GenerateToken(user *dao.User) (*SignedToken, error) {
+	b := make([]byte, 32)
+	if _, err := io.ReadFull(rand.Reader, b); err != nil {
+		return nil, err
+	}
 	claims := &JwtClaims{
-		ID:    user.ID,
+		ID:    uuid.NewSHA1(user.ID, b),
 		Email: user.Email,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Local().Add(time.Hour * time.Duration(w.ExpirationHours)).Unix(),

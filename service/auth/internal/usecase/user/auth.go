@@ -4,7 +4,6 @@ import (
 	context "auth-service/pkg/type"
 	"auth-service/service/auth/internal/domain/user"
 	utils "auth-service/service/auth/utils/jwt"
-	"fmt"
 	"golang.org/x/crypto/bcrypt"
 	"log"
 )
@@ -18,12 +17,11 @@ func (uc *UseCase) Auth(c context.Context, user *user.User) (*utils.SignedToken,
 
 	ucUser, err := uc.adapterStorage.GetUser(c, user)
 	if err != nil {
-		fmt.Println(err)
 		return nil, err
 	}
 
 	jwtWrapper := &utils.JwtWrapper{
-		SecretKey:       "key",
+		SecretKey:       "jfaijfp3420",
 		Issuer:          "",
 		ExpirationHours: 24,
 	}

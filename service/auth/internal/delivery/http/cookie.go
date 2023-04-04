@@ -10,7 +10,7 @@ func jwtTokenCookie(token *utils.SignedToken) *http.Cookie {
 	return &http.Cookie{
 		Name:  cookie.JwtTokenName,
 		Value: token.Value,
-		//Path:       "",
+		Path:  "/",
 		//Domain:     "",
 		Expires: token.ExpiresAt,
 		//RawExpires: "",
