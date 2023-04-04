@@ -5,7 +5,6 @@ import (
 	context "auth-service/pkg/type"
 	"auth-service/service/auth/internal/domain/user"
 	"auth-service/service/auth/internal/repository/storage/postgres/dao"
-	"fmt"
 	"github.com/Masterminds/squirrel"
 	"github.com/georgysavva/scany/pgxscan"
 	"github.com/jackc/pgx/v4"
@@ -122,8 +121,6 @@ func (r *Repository) CreateUser(c context.Context, user *user.User) error {
 	if err != nil {
 		return err
 	}
-
-	fmt.Println("pgerror =", err)
 
 	return nil
 }

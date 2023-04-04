@@ -2,8 +2,7 @@ package http
 
 import (
 	context "auth-service/pkg/type"
-	validator "auth-service/service/auth/internal/delivery/http/validator/auth"
-	"auth-service/service/auth/internal/domain/user"
+	"auth-service/service/auth/internal/delivery/http/validator"
 	"errors"
 	"github.com/jackc/pgconn"
 	"github.com/labstack/echo/v4"
@@ -12,38 +11,38 @@ import (
 )
 
 func (de *Delivery) reg(c echo.Context) error {
-	var timeout = 1 * time.Second
-
 	ctx := context.New(c)
-	ctx.WithTimeout(timeout)
+	ctx.WithTimeout(100 * time.Millisecond)
 
-	var reqData user.User
-	err := c.Bind(&reqData)
+	user, err := de.bindUser(c)
 	if err != nil {
 		return c.String(http.StatusBadRequest, "bad request")
 	}
 
-	de.echo.Validator = validator.New()
-	if err = de.echo.Validator.Validate(reqData); err != nil {
-		return err
+	err = validator.ValidateReqData(de.echo, user)
+	if err != nil {
+		return c.String(http.StatusBadRequest, "bad request")
 	}
 
-	err = de.ucUser.Register(ctx, &reqData)
+	err = de.ucUser.Register(ctx, &user)
 	if err != nil {
 		var pgErr *pgconn.PgError
-
 		if errors.As(err, &pgErr) {
 			const ErrCodeDuplicateUniqueConstraint = "23505"
+			const ErrTerminatingConnection = "57P01"
 
 			if pgErr.Code == ErrCodeDuplicateUniqueConstraint {
 				return c.String(http.StatusConflict, "user with such data is already registered")
 			}
 
+			if pgErr.Code == ErrTerminatingConnection {
+				return c.String(http.StatusServiceUnavailable, "user not authorized")
+			}
+
 			return c.String(http.StatusInternalServerError, "create user error")
 		}
 
-		return c.String(http.StatusConflict, "user not registered")
+		return c.String(http.StatusInternalServerError, "user not registered")
 	}
-
 	return c.String(http.StatusCreated, "user registered")
 }

@@ -1,8 +1,9 @@
-package auth
+package validator
 
 import (
 	"auth-service/service/auth/internal/domain/user"
 	"errors"
+	"github.com/labstack/echo/v4"
 )
 
 type Validator struct{}
@@ -19,4 +20,12 @@ func (v *Validator) Validate(i interface{}) error {
 	default:
 		return errors.New("request body type not valid")
 	}
+}
+
+func ValidateReqData(echo *echo.Echo, reqData user.User) error {
+	echo.Validator = New()
+	if err := echo.Validator.Validate(reqData); err != nil {
+		return err
+	}
+	return nil
 }
