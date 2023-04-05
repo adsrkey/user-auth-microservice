@@ -44,7 +44,7 @@ func main() {
 	e.Use(middleware.RequestID())
 
 	// start server
-	server := http.New(e, ucUser)
+	server := http.New(ctx, e, ucUser)
 	server.Start(":8080")
 
 	// wait for SIGINT/SIGTERM syscall

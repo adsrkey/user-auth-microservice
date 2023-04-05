@@ -2,47 +2,46 @@ package http
 
 import (
 	context "auth-service/pkg/type"
+	"auth-service/service/auth/internal/delivery/http/response"
 	"auth-service/service/auth/internal/delivery/http/validator"
-	"errors"
-	"github.com/jackc/pgconn"
 	"github.com/labstack/echo/v4"
 	"net/http"
 	"time"
 )
 
-func (de *Delivery) reg(c echo.Context) error {
+func (de *Delivery) register(c echo.Context) error {
 	ctx := context.New(c)
 	ctx.WithTimeout(100 * time.Millisecond)
 
 	user, err := de.bindUser(c)
 	if err != nil {
-		return c.String(http.StatusBadRequest, "bad request")
+		resp := &response.ErrorResponse{
+			StatusCode:       http.StatusBadRequest,
+			DeveloperMessage: "error with bind user from request",
+		}
+		return c.JSON(resp.StatusCode, resp)
 	}
 
-	err = validator.ValidateReqData(de.echo, user)
+	de.echo.Validator = validator.New()
+	err = validator.ValidateReqData(de.echo.Validator, user)
 	if err != nil {
-		return c.String(http.StatusBadRequest, "bad request")
+		resp := &response.ErrorResponse{
+			StatusCode:       http.StatusBadRequest,
+			DeveloperMessage: "user not valid",
+		}
+		return c.JSON(resp.StatusCode, resp)
 	}
 
 	err = de.ucUser.Register(ctx, &user)
 	if err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) {
-			const ErrCodeDuplicateUniqueConstraint = "23505"
-			const ErrTerminatingConnection = "57P01"
-
-			if pgErr.Code == ErrCodeDuplicateUniqueConstraint {
-				return c.String(http.StatusConflict, "user with such data is already registered")
-			}
-
-			if pgErr.Code == ErrTerminatingConnection {
-				return c.String(http.StatusServiceUnavailable, "user not authorized")
-			}
-
-			return c.String(http.StatusInternalServerError, "create user error")
-		}
-
-		return c.String(http.StatusInternalServerError, "user not registered")
+		resp := handlePgError(err)
+		return c.JSON(resp.StatusCode, &resp)
 	}
-	return c.String(http.StatusCreated, "user registered")
+
+	status := http.StatusCreated
+	resp := &response.Response{
+		Message: "user registered",
+	}
+
+	return c.JSON(status, resp)
 }

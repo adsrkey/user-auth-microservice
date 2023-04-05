@@ -5,6 +5,10 @@ import (
 	"time"
 )
 
+var (
+	DeadlineExceeded = context.DeadlineExceeded
+)
+
 type Value interface {
 	Value(key any) any
 	WithValue(key, value any)

@@ -22,9 +22,8 @@ func (v *Validator) Validate(i interface{}) error {
 	}
 }
 
-func ValidateReqData(echo *echo.Echo, reqData user.User) error {
-	echo.Validator = New()
-	if err := echo.Validator.Validate(reqData); err != nil {
+func ValidateReqData(validator echo.Validator, reqData user.User) error {
+	if err := validator.Validate(reqData); err != nil {
 		return err
 	}
 	return nil
