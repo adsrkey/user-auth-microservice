@@ -60,7 +60,7 @@ func (r *Repository) oneUserTx(ctx context.Context, tx pgx.Tx, user *user.User) 
 		"modified_at",
 		"email",
 		"hash",
-	).From("adsrkey.user")
+	).From("users.users")
 
 	builder = builder.Where(squirrel.Eq{"email": user.Email})
 
@@ -148,7 +148,7 @@ func (r *Repository) createUserTx(c context.Context, tx pgx.Tx, user *user.User)
 func (r *Repository) createOneUserTx(ctx context.Context, tx pgx.Tx, user *user.User) error {
 	_, err := tx.CopyFrom(
 		ctx,
-		pgx.Identifier{"adsrkey", "user"},
+		pgx.Identifier{"users", "users"},
 		CreateColumnContact,
 		r.toCopyFromSource(user))
 	if err != nil {

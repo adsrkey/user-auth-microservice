@@ -1,0 +1,46 @@
+version: '3'
+
+services:
+
+  postgres:
+    container_name: postgres
+    image: 'postgres:latest'
+    ports:
+      - "5432:5432"
+    restart: always
+    deploy:
+      mode: replicated
+      replicas: 1
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: development
+    volumes:
+      - ./db-data/postgresql/:/var/lib/postgresql/data/
+
+
+  auth-service:
+    container_name: auth-service
+    image: 'golang:1.20.1'
+    build:
+      context: ../.
+      dockerfile: /service/auth/auth-service.dockerfile
+    restart: always
+    ports:
+      - "8080:8080"
+    deploy:
+      mode: replicated
+      replicas: 1
+    environment:
+      CONTEXT_KEY_REQUEST_ID: ok
+
+      MIGRATIONS_DIR: service/auth/internal/repository/storage/postgres/migrations
+      PGDATABASE: development
+      PGHOST: postgres
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGSSLMODE: disable
+    depends_on:
+      postgres:
+        condition: service_started
