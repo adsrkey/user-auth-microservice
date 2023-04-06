@@ -13,7 +13,7 @@ import (
 )
 
 func init() {
-	viper.SetDefault("MIGRATIONS_DIR", "./service/auth/internal/repository/storage/postgres/migrations")
+	viper.SetDefault("MIGRATIONS_DIR", "service/auth/internal/repository/storage/postgres/migrations")
 }
 
 type Repository struct {

@@ -82,7 +82,7 @@ func (de *Delivery) auth(c echo.Context) error {
 
 	c.SetCookie(cookie.JwtTokenCookie(token))
 
-	status := http.StatusAccepted
+	status := http.StatusOK
 	resp := &response.Response{
 		Message: "user authorized",
 	}

@@ -1,10 +1,22 @@
 # Authentication microservice
 
+## How to build
+
+### Docker-compose with make:
+
+```
+    cd .\deploy\
+    make up_build
+```
+
+---
+
 ## Endpoints
 
 ### cURL examples:
 
 #### /api/v1/reg - registration
+
 ```
 curl --location 'http://localhost:8080/api/v1/reg' \
 --header 'Content-Type: application/json' \
@@ -16,7 +28,7 @@ curl --location 'http://localhost:8080/api/v1/reg' \
 
 #### Response status code example:
 
-- 201 | Created, 
+- 201 | Created,
 - 409 | Conflict,
 - 400 | Bad Request,
 - 500 | Internal Server Error,
@@ -25,6 +37,7 @@ curl --location 'http://localhost:8080/api/v1/reg' \
 ###### request / response format: application/json
 
 ###### ok:
+
 ``
 {
 "message": "user registered"
@@ -32,6 +45,7 @@ curl --location 'http://localhost:8080/api/v1/reg' \
 ``
 
 ###### error:
+
 ``
 {
 "code": 409,
@@ -42,6 +56,7 @@ curl --location 'http://localhost:8080/api/v1/reg' \
 ---
 
 #### /api/v1/auth - authentication
+
 ```
 curl --location 'http://localhost:8080/api/v1/auth' \
 --header 'Content-Type: application/json' \
@@ -53,7 +68,7 @@ curl --location 'http://localhost:8080/api/v1/auth' \
 
 #### Response status code example:
 
-- 202 | Status Accepted,
+- 200 | Status OK,
 - 401 | Unauthorized,
 - 400 | Bad Request,
 - 500 | Internal Server Error,
@@ -62,6 +77,7 @@ curl --location 'http://localhost:8080/api/v1/auth' \
 ###### request / response format: application/json
 
 ###### ok:
+
 ``
 {
 "message": "user authorized"
@@ -69,6 +85,7 @@ curl --location 'http://localhost:8080/api/v1/auth' \
 ``
 
 ###### error:
+
 ``
 {
 "code": 400,
@@ -77,6 +94,7 @@ curl --location 'http://localhost:8080/api/v1/auth' \
 ``
 
 ## Folder structure
+
     .
     ├── deploy
     ├── pkg               
