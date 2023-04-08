@@ -3,10 +3,10 @@ package utils
 import (
 	"auth-service/service/auth/internal/repository/storage/postgres/dao"
 	"crypto/rand"
-	"errors"
-	"github.com/google/uuid"
 	"io"
 	"time"
+
+	"github.com/google/uuid"
 
 	"github.com/golang-jwt/jwt"
 )
@@ -29,12 +29,15 @@ type SignedToken struct {
 }
 
 func (w *JwtWrapper) GenerateToken(user *dao.User) (*SignedToken, error) {
-	b := make([]byte, 32)
-	if _, err := io.ReadFull(rand.Reader, b); err != nil {
+	bytesGenSize := 32
+	randomBytes := make([]byte, bytesGenSize)
+
+	if _, err := io.ReadFull(rand.Reader, randomBytes); err != nil {
 		return nil, err
 	}
+
 	claims := &JwtClaims{
-		ID:    uuid.NewSHA1(user.ID, b),
+		ID:    uuid.NewSHA1(user.ID, randomBytes),
 		Email: user.Email,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Local().Add(time.Hour * time.Duration(w.ExpirationHours)).Unix(),
@@ -72,11 +75,11 @@ func (w *JwtWrapper) ValidateToken(signedToken string) (claims *JwtClaims, err e
 	claims, ok := token.Claims.(*JwtClaims)
 
 	if !ok {
-		return nil, errors.New("couldn't parse claims")
+		return nil, ErrParseClaims
 	}
 
 	if claims.ExpiresAt < time.Now().Local().Unix() {
-		return nil, errors.New("jwt is expired")
+		return nil, ErrExpired
 	}
 
 	return claims, nil

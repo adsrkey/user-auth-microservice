@@ -1,30 +1,31 @@
 package postgres
 
 import (
-	"auth-service/pkg/tool/transaction"
-	context "auth-service/pkg/type"
+	"auth-service/pkg/tool/transactions"
 	"auth-service/service/auth/internal/domain/user"
 	"auth-service/service/auth/internal/repository/storage/postgres/dao"
+	"context"
+	"time"
+
 	"github.com/Masterminds/squirrel"
 	"github.com/georgysavva/scany/pgxscan"
 	"github.com/jackc/pgx/v4"
-	"time"
 )
 
-func (r *Repository) GetUser(c context.Context, user *user.User) (*dao.User, error) {
-	ctx := c.CopyWithTimeout(r.options.Timeout)
-	defer ctx.Cancel()
+func (r *Repository) GetUser(ctx context.Context, user *user.User) (*dao.User, error) {
+	ctx, cancel := context.WithTimeout(ctx, r.options.Timeout)
+	defer cancel()
 
-	tx, err := r.db.Begin(ctx)
+	transaction, err := r.db.Begin(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	defer func(ctx context.Context, t pgx.Tx) {
-		err = transaction.Finish(ctx, t, err)
-	}(ctx, tx)
+	defer func(ctx context.Context, transaction pgx.Tx) {
+		err = transactions.Finish(ctx, transaction, err)
+	}(ctx, transaction)
 
-	response, err := r.getUserTx(ctx, tx, user)
+	response, err := r.getUserTx(ctx, transaction, user)
 	if err != nil {
 		return nil, err
 	}
@@ -32,18 +33,9 @@ func (r *Repository) GetUser(c context.Context, user *user.User) (*dao.User, err
 	return response, nil
 }
 
-func (r *Repository) getUserTx(c context.Context, tx pgx.Tx, user *user.User) (*dao.User, error) {
-	ctx := c.CopyWithTimeout(r.options.Timeout)
-	defer ctx.Cancel()
-
-	tx, err := r.db.Begin(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	defer func(ctx context.Context, t pgx.Tx) {
-		err = transaction.Finish(ctx, t, err)
-	}(ctx, tx)
+func (r *Repository) getUserTx(ctx context.Context, tx pgx.Tx, user *user.User) (*dao.User, error) {
+	ctx, cancel := context.WithTimeout(ctx, r.options.Timeout)
+	defer cancel()
 
 	response, err := r.oneUserTx(ctx, tx, user)
 	if err != nil {
@@ -53,7 +45,7 @@ func (r *Repository) getUserTx(c context.Context, tx pgx.Tx, user *user.User) (*
 	return response, nil
 }
 
-func (r *Repository) oneUserTx(ctx context.Context, tx pgx.Tx, user *user.User) (*dao.User, error) {
+func (r *Repository) oneUserTx(ctx context.Context, transaction pgx.Tx, user *user.User) (*dao.User, error) {
 	var builder = r.genSQL.Select(
 		"id",
 		"created_at",
@@ -69,7 +61,7 @@ func (r *Repository) oneUserTx(ctx context.Context, tx pgx.Tx, user *user.User) 
 		return nil, err
 	}
 
-	rows, err := tx.Query(ctx, query, args...)
+	rows, err := transaction.Query(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -78,6 +70,7 @@ func (r *Repository) oneUserTx(ctx context.Context, tx pgx.Tx, user *user.User) 
 	if err = pgxscan.ScanOne(&daoUser, rows); err != nil {
 		return nil, err
 	}
+
 	return &daoUser, nil
 }
 
@@ -92,32 +85,24 @@ func (r Repository) toCopyFromSource(contacts ...*user.User) pgx.CopyFromSource 
 			val.Hash,
 		}
 	}
+
 	return pgx.CopyFromRows(rows)
 }
 
-func (r *Repository) toDomainUser(in *dao.User) (*user.User, error) {
-	// TODO
-	u := &user.User{
-		Email: in.Email,
-		Hash:  in.Hash,
-	}
-	return u, nil
-}
+func (r *Repository) CreateUser(ctx context.Context, user *user.User) error {
+	ctx, cancel := context.WithTimeout(ctx, r.options.Timeout)
+	defer cancel()
 
-func (r *Repository) CreateUser(c context.Context, user *user.User) error {
-	ctx := c.CopyWithTimeout(r.options.Timeout)
-	defer ctx.Cancel()
-
-	tx, err := r.db.Begin(ctx)
+	transaction, err := r.db.Begin(ctx)
 	if err != nil {
 		return err
 	}
 
-	defer func(ctx context.Context, t pgx.Tx) {
-		err = transaction.Finish(ctx, t, err)
-	}(ctx, tx)
+	defer func(ctx context.Context, transaction pgx.Tx) {
+		err = transactions.Finish(ctx, transaction, err)
+	}(ctx, transaction)
 
-	err = r.createUserTx(ctx, tx, user)
+	err = r.createUserTx(ctx, transaction, user)
 	if err != nil {
 		return err
 	}
@@ -125,23 +110,15 @@ func (r *Repository) CreateUser(c context.Context, user *user.User) error {
 	return nil
 }
 
-func (r *Repository) createUserTx(c context.Context, tx pgx.Tx, user *user.User) error {
-	ctx := c.CopyWithTimeout(r.options.Timeout)
-	defer ctx.Cancel()
+func (r *Repository) createUserTx(ctx context.Context, tx pgx.Tx, user *user.User) error {
+	ctx, cancel := context.WithTimeout(ctx, r.options.Timeout)
+	defer cancel()
 
-	tx, err := r.db.Begin(ctx)
+	err := r.createOneUserTx(ctx, tx, user)
 	if err != nil {
 		return err
 	}
 
-	defer func(ctx context.Context, t pgx.Tx) {
-		err = transaction.Finish(ctx, t, err)
-	}(ctx, tx)
-
-	err = r.createOneUserTx(ctx, tx, user)
-	if err != nil {
-		return err
-	}
 	return nil
 }
 
@@ -154,6 +131,7 @@ func (r *Repository) createOneUserTx(ctx context.Context, tx pgx.Tx, user *user.
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 

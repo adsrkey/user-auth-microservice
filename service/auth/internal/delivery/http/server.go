@@ -24,7 +24,10 @@ func (de *Delivery) Notify(sigint chan os.Signal) {
 }
 
 func (de *Delivery) Shutdown(ctx context.Context) {
-	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
+	seconds := 15
+	timeout := time.Millisecond * time.Duration(seconds)
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+
 	defer cancel()
 
 	log.Println("Starting shutdown auth service...")

@@ -1,9 +1,9 @@
 package usecase
 
 import (
-	context "auth-service/pkg/type"
 	"auth-service/service/auth/internal/domain/user"
 	utils "auth-service/service/auth/utils/jwt"
+	"context"
 )
 
 type User interface {
@@ -11,6 +11,6 @@ type User interface {
 }
 
 type UserAuth interface {
-	Auth(c context.Context, user *user.User) (*utils.SignedToken, error)
-	Register(c context.Context, user *user.User) error
+	Auth(ctx context.Context, user *user.User) (*utils.SignedToken, error)
+	Register(ctx context.Context, user *user.User) error
 }

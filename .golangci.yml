@@ -1,0 +1,52 @@
+# More info on config here: https://github.com/golangci/golangci-lint#config-file
+run:
+  deadline: 10m
+  issues-exit-code: 1
+
+output:
+  format: colored-line-number
+  print-issued-lines: true
+  print-linter-name: true
+
+linters:
+  enable-all: true
+
+  disable:
+#    - tagliatelle # json camel case
+    - structcheck
+    - golint
+    - ifshort
+    - maligned
+    - varcheck
+    - scopelint
+    - deadcode
+    - interfacer
+    - nosnakecase
+    - exhaustruct # missing field in struct initialize
+    - gci
+    - gochecknoglobals
+    - goimports
+    - ireturn
+    - wrapcheck
+    - cyclop
+    - nonamedreturns
+    - funlen
+    - containedctx
+    - gofumpt
+    - exhaustivestruct
+#  enable:
+#    - golint
+#    - govet
+#    - errcheck
+#    - deadcode
+#    - structcheck
+#    - varcheck
+#    - ineffassign
+#    - typecheck
+#    - goconst
+#    - gosec
+#    - goimports
+#    - gosimple
+#    - unused
+#    - staticcheck # enable before push
+    # - dupl # - it's very slow, enable if you really know why you need it

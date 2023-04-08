@@ -1,44 +1,49 @@
 package http
 
 import (
-	context "auth-service/pkg/type"
 	"auth-service/service/auth/internal/delivery/http/response"
+	"context"
 	"errors"
-	"github.com/jackc/pgconn"
 	"net/http"
+
+	"github.com/jackc/pgconn"
 )
 
-// postgres code
 const (
 	ErrTerminatingConnection         = "57P01"
 	ErrCodeDuplicateUniqueConstraint = "23505"
 )
 
-func handlePgError(err error) response.ErrorResponse {
+func (de *Delivery) initErrorResponses() {
+	de.errorResponses = make(map[string]response.ErrorResponse)
+
+	de.errorResponses[ErrCodeDuplicateUniqueConstraint] = response.ErrorResponse{
+		StatusCode:       http.StatusConflict,
+		DeveloperMessage: "user with such data is already registered",
+	}
+
+	de.errorResponses[ErrTerminatingConnection] = response.ErrorResponse{
+		StatusCode:       http.StatusServiceUnavailable,
+		DeveloperMessage: "database is unavailable",
+	}
+}
+
+func (de *Delivery) handlePgError(err error, codes []string) (response.ErrorResponse, error) {
 	var pgErr *pgconn.PgError
+
 	if errors.As(err, &pgErr) {
-
-		if pgErr.Code == ErrCodeDuplicateUniqueConstraint {
-			resp := response.ErrorResponse{
-				StatusCode:       http.StatusConflict,
-				DeveloperMessage: "user with such data is already registered",
+		for _, code := range codes {
+			if pgErr.Code == code {
+				return de.errorResponses[code], err
 			}
-			return resp
-		}
-
-		if pgErr.Code == ErrTerminatingConnection {
-			resp := response.ErrorResponse{
-				StatusCode:       http.StatusServiceUnavailable,
-				DeveloperMessage: "database is unavailable",
-			}
-			return resp
 		}
 
 		resp := response.ErrorResponse{
 			StatusCode:       http.StatusInternalServerError,
 			DeveloperMessage: "error with database",
 		}
-		return resp
+
+		return resp, err
 	}
 
 	if errors.Is(err, context.DeadlineExceeded) {
@@ -46,12 +51,9 @@ func handlePgError(err error) response.ErrorResponse {
 			StatusCode:       http.StatusServiceUnavailable,
 			DeveloperMessage: "context deadline exceeded",
 		}
-		return resp
+
+		return resp, err
 	}
 
-	resp := response.ErrorResponse{
-		StatusCode:       http.StatusUnauthorized,
-		DeveloperMessage: "user not registered",
-	}
-	return resp
+	return response.ErrorResponse{}, nil
 }

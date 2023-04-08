@@ -7,17 +7,11 @@ import (
 
 func JwtTokenCookie(token *utils.SignedToken) *http.Cookie {
 	return &http.Cookie{
-		Name:  JwtTokenName,
-		Value: token.Value,
-		Path:  "/",
-		//Domain:     "",
-		Expires: token.ExpiresAt,
-		//RawExpires: "",
-		//MaxAge:     0,
+		Name:     JwtTokenName,
+		Value:    token.Value,
+		Path:     "/",
+		Expires:  token.ExpiresAt,
 		Secure:   false,
 		HttpOnly: true,
-		//SameSite:   0,
-		//Raw:        "",
-		//Unparsed:   nil,
 	}
 }

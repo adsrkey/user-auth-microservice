@@ -6,5 +6,5 @@ type Response struct {
 
 type ErrorResponse struct {
 	StatusCode       int    `json:"code,omitempty"`
-	DeveloperMessage string `json:"developer_message"`
+	DeveloperMessage string `json:"developerMessage"`
 }

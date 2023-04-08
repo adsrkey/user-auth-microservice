@@ -8,17 +8,8 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v4/pgxpool"
-	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
-	_ "github.com/spf13/viper/remote"
 )
-
-// TODO: normally getting config with viper
-func init() {
-	if err := initDefaultEnv(); err != nil {
-		panic(err)
-	}
-}
 
 func initDefaultEnv() error {
 	if len(os.Getenv("PGHOST")) == 0 {
@@ -26,31 +17,37 @@ func initDefaultEnv() error {
 			return errors.WithStack(err)
 		}
 	}
+
 	if len(os.Getenv("PGPORT")) == 0 {
 		if err := os.Setenv("PGPORT", "5838"); err != nil {
 			return errors.WithStack(err)
 		}
 	}
+
 	if len(os.Getenv("PGDATABASE")) == 0 {
 		if err := os.Setenv("PGDATABASE", "postgres"); err != nil {
 			return errors.WithStack(err)
 		}
 	}
+
 	if len(os.Getenv("PGUSER")) == 0 {
 		if err := os.Setenv("PGUSER", "postgres"); err != nil {
 			return errors.WithStack(err)
 		}
 	}
+
 	if len(os.Getenv("PGPASSWORD")) == 0 {
 		if err := os.Setenv("PGPASSWORD", "password"); err != nil {
 			return errors.WithStack(err)
 		}
 	}
+
 	if len(os.Getenv("PGSSLMODE")) == 0 {
 		if err := os.Setenv("PGSSLMODE", "disable"); err != nil {
 			return errors.WithStack(err)
 		}
 	}
+
 	return nil
 }
 
@@ -98,6 +95,9 @@ func (s Settings) toDSN() string {
 }
 
 func New(settings Settings) (*Store, error) {
+	if err := initDefaultEnv(); err != nil {
+		panic(err)
+	}
 
 	config, err := pgxpool.ParseConfig(settings.toDSN())
 	if err != nil {
@@ -109,8 +109,12 @@ func New(settings Settings) (*Store, error) {
 		return nil, err
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	duration := 5
+	timeout := time.Second * time.Duration(duration)
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+
 	defer cancel()
+
 	if err = conn.Ping(ctx); err != nil {
 		return nil, err
 	}
