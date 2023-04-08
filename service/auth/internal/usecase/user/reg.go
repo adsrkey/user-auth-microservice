@@ -1,23 +1,27 @@
 package user
 
 import (
-	context "auth-service/pkg/type"
 	"auth-service/service/auth/internal/domain/user"
-	"golang.org/x/crypto/bcrypt"
+	"context"
 	"log"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
-func (uc *UseCase) Register(c context.Context, user *user.User) error {
+func (uc *UseCase) Register(ctx context.Context, user *user.User) error {
 	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.MinCost)
 	if err != nil {
 		log.Println(err)
+
 		return err
 	}
+
 	user.Hash = hash
 
-	err = uc.adapterStorage.CreateUser(c, user)
+	err = uc.adapterStorage.CreateUser(ctx, user)
 	if err != nil {
 		return err
 	}
+
 	return nil
 }

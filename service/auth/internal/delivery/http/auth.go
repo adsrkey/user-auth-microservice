@@ -1,40 +1,46 @@
 package http
 
 import (
-	context "auth-service/pkg/type"
 	"auth-service/service/auth/internal/delivery/http/cookie"
 	"auth-service/service/auth/internal/delivery/http/response"
 	"auth-service/service/auth/internal/delivery/http/validator"
+	"context"
 	"errors"
-	"github.com/jackc/pgconn"
-	"github.com/jackc/pgx/v4"
-	"github.com/labstack/echo/v4"
 	"net/http"
 	"time"
+
+	"github.com/jackc/pgx/v4"
+
+	"github.com/labstack/echo/v4"
 )
 
-func (de *Delivery) auth(c echo.Context) error {
-	ctx := context.New(c)
-	ctx.WithTimeout(100 * time.Millisecond)
-	defer ctx.Cancel()
+func (de *Delivery) auth(echoCtx echo.Context) error {
+	milliseconds := 100
+	timeout := time.Millisecond * time.Duration(milliseconds)
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 
-	user, err := de.bindUser(c)
+	defer cancel()
+
+	user, err := de.bindUser(echoCtx)
 	if err != nil {
 		resp := &response.ErrorResponse{
 			StatusCode:       http.StatusBadRequest,
 			DeveloperMessage: "error with bind user from request",
 		}
-		return c.JSON(resp.StatusCode, resp)
+
+		return echoCtx.JSON(resp.StatusCode, resp)
 	}
 
 	de.echo.Validator = validator.New()
+
 	err = validator.ValidateReqData(de.echo.Validator, user)
 	if err != nil {
 		resp := &response.ErrorResponse{
 			StatusCode:       http.StatusBadRequest,
 			DeveloperMessage: "user not valid",
 		}
-		return c.JSON(resp.StatusCode, resp)
+
+		return echoCtx.JSON(resp.StatusCode, resp)
 	}
 
 	token, err := de.ucUser.Auth(ctx, &user)
@@ -44,47 +50,35 @@ func (de *Delivery) auth(c echo.Context) error {
 				StatusCode:       http.StatusBadRequest,
 				DeveloperMessage: "this user is not in the database",
 			}
-			return c.JSON(resp.StatusCode, resp)
+
+			return echoCtx.JSON(resp.StatusCode, resp)
 		}
 
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) {
+		codesSize := 2
+		codes := make([]string, 0, codesSize)
 
-			if pgErr.Code == ErrTerminatingConnection {
-				resp := &response.ErrorResponse{
-					StatusCode:       http.StatusServiceUnavailable,
-					DeveloperMessage: "database is unavailable",
-				}
-				return c.JSON(resp.StatusCode, resp)
-			}
+		codes = append(codes,
+			ErrTerminatingConnection)
 
-			resp := &response.ErrorResponse{
-				StatusCode:       http.StatusInternalServerError,
-				DeveloperMessage: "error with database",
-			}
-			return c.JSON(resp.StatusCode, resp)
+		resp, err := de.handlePgError(err, codes)
+		if err != nil {
+			return echoCtx.JSON(resp.StatusCode, &resp)
 		}
 
-		if errors.Is(err, context.DeadlineExceeded) {
-			resp := &response.ErrorResponse{
-				StatusCode:       http.StatusServiceUnavailable,
-				DeveloperMessage: "context deadline exceeded",
-			}
-			return c.JSON(resp.StatusCode, resp)
-		}
-
-		resp := &response.ErrorResponse{
+		resp = response.ErrorResponse{
 			StatusCode:       http.StatusUnauthorized,
 			DeveloperMessage: "user not authorized",
 		}
-		return c.JSON(resp.StatusCode, resp)
+
+		return echoCtx.JSON(resp.StatusCode, &resp)
 	}
 
-	c.SetCookie(cookie.JwtTokenCookie(token))
+	echoCtx.SetCookie(cookie.JwtTokenCookie(token))
 
 	status := http.StatusOK
 	resp := &response.Response{
 		Message: "user authorized",
 	}
-	return c.JSON(status, resp)
+
+	return echoCtx.JSON(status, resp)
 }

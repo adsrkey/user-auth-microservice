@@ -1,8 +1,9 @@
 package postgres
 
 import (
-	"github.com/labstack/gommon/log"
 	"time"
+
+	"github.com/labstack/gommon/log"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -11,10 +12,6 @@ import (
 
 	"github.com/pressly/goose"
 )
-
-func init() {
-	viper.SetDefault("MIGRATIONS_DIR", "service/auth/internal/repository/storage/postgres/migrations")
-}
 
 type Repository struct {
 	db      *pgxpool.Pool
@@ -28,19 +25,21 @@ type Options struct {
 	DefaultOffset uint64
 }
 
-func New(db *pgxpool.Pool, o Options) (*Repository, error) {
-	if err := migrations(db); err != nil {
+func New(pool *pgxpool.Pool, options Options) (*Repository, error) {
+	viper.SetDefault("MIGRATIONS_DIR", "service/auth/internal/repository/storage/postgres/migrations")
+
+	if err := migrations(pool); err != nil {
 		return nil, err
 	}
 
-	var r = &Repository{
+	var repository = &Repository{
 		genSQL: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
-		db:     db,
+		db:     pool,
 	}
 
-	r.SetOptions(o)
+	repository.SetOptions(options)
 
-	return r, nil
+	return repository, nil
 }
 
 func (r *Repository) SetOptions(options Options) {
@@ -49,7 +48,9 @@ func (r *Repository) SetOptions(options Options) {
 	}
 
 	if options.Timeout == 0 {
-		options.Timeout = time.Second * 30
+		timeout := 30
+		duration := time.Second * time.Duration(timeout)
+		options.Timeout = duration
 	}
 
 	if r.options != options {
@@ -58,24 +59,31 @@ func (r *Repository) SetOptions(options Options) {
 }
 
 func migrations(pool *pgxpool.Pool) (err error) {
-	db, err := goose.OpenDBWithDriver("postgres", pool.Config().ConnConfig.ConnString())
+	database, err := goose.OpenDBWithDriver("postgres", pool.Config().ConnConfig.ConnString())
 	if err != nil {
 		log.Error(err)
+
 		return err
 	}
+
 	defer func() {
-		if errClose := db.Close(); errClose != nil {
+		if errClose := database.Close(); errClose != nil {
 			log.Error(errClose)
 			err = errClose
+
 			return
 		}
 	}()
 
 	dir := viper.GetString("MIGRATIONS_DIR")
+
 	goose.SetTableName("user_version")
-	if err = goose.Run("up", db, dir); err != nil {
+
+	if err = goose.Run("up", database, dir); err != nil {
 		log.Error(err, zap.String("command", "up"))
+
 		return err
 	}
+
 	return
 }

@@ -7,10 +7,16 @@ import (
 	"auth-service/service/auth/internal/repository/storage/postgres/worker"
 	"auth-service/service/auth/internal/usecase/user"
 	"context"
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 	"log"
 	"os"
+	"time"
+
+	"github.com/labstack/echo/v4"
+
+	"github.com/labstack/echo/v4/middleware"
+
+	_ "github.com/lib/pq"
+	_ "github.com/spf13/viper/remote"
 )
 
 func main() {
@@ -26,13 +32,26 @@ func main() {
 	defer conn.Pool.Close()
 
 	// start reconnection worker
-	reconnectionWorker := worker.New(ctx, conn, sigint)
+	pause := 5
+	workerPause := time.Second * time.Duration(pause)
+
+	timeout := 15
+	reconnectTimeout := time.Second * time.Duration(timeout)
+
+	reconnectionWorker := worker.New(
+		ctx,
+		conn,
+		sigint,
+		workerPause,
+		reconnectTimeout)
+
 	reconnectionWorker.Run()
 
 	// repository
 	repo, err := repository.New(conn.Pool, repository.Options{})
 	if err != nil {
 		log.Println(err)
+
 		return
 	}
 

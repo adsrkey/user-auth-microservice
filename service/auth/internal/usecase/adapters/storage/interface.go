@@ -1,9 +1,9 @@
 package storage
 
 import (
-	context "auth-service/pkg/type"
 	"auth-service/service/auth/internal/domain/user"
 	"auth-service/service/auth/internal/repository/storage/postgres/dao"
+	"context"
 )
 
 type Storage interface {
@@ -15,6 +15,6 @@ type User interface {
 }
 
 type GetUser interface {
-	GetUser(c context.Context, user *user.User) (*dao.User, error)
-	CreateUser(c context.Context, user *user.User) error
+	GetUser(ctx context.Context, user *user.User) (*dao.User, error)
+	CreateUser(ctx context.Context, user *user.User) error
 }

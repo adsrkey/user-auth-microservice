@@ -6,8 +6,7 @@ up:
 	@echo "Docker images started!"
 
 up_build:
-	@echo "Stopping docker images (if running...)"
-	docker-compose down
+	#lint
 	@echo "Building (when required) and starting docker images..."
 	docker-compose up --build -d
 	@echo "Docker images built and started!"
@@ -15,4 +14,7 @@ up_build:
 down:
 	@echo "Stopping docker compose..."
 	docker-compose down
-	@echo "Done!"
+	@echo "docker-compose down: Done!"
+
+lint:
+	@golangci-lint run ./../... -v

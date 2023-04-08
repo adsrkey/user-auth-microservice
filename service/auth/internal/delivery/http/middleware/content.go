@@ -2,28 +2,33 @@ package middleware
 
 import (
 	"auth-service/service/auth/internal/delivery/http/response"
-	"github.com/labstack/echo/v4"
 	"net/http"
+
+	"github.com/labstack/echo/v4"
 )
 
 func ContentHandlerFunc(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		if c.Request().Header.Get("Content-Type") != "application/json" {
-			c.Response().Header().Set(echo.HeaderAccept, "application/json")
+	return func(ctx echo.Context) error {
+		if ctx.Request().Header.Get("Content-Type") != "application/json" {
+			ctx.Response().Header().Set(echo.HeaderAccept, "application/json")
+
 			resp := &response.ErrorResponse{
 				StatusCode:       http.StatusUnsupportedMediaType,
 				DeveloperMessage: "Unsupported Content-Type. Please set Content-Type: application/json",
 			}
-			return c.JSON(resp.StatusCode, resp)
+
+			return ctx.JSON(resp.StatusCode, resp)
 		}
 
-		if c.Request().Header.Get("Content-Length") == "0" {
+		if ctx.Request().Header.Get("Content-Length") == "0" {
 			resp := &response.ErrorResponse{
 				StatusCode:       http.StatusLengthRequired,
 				DeveloperMessage: "Content-Length required",
 			}
-			return c.JSON(resp.StatusCode, resp)
+
+			return ctx.JSON(resp.StatusCode, resp)
 		}
-		return next(c)
+
+		return next(ctx)
 	}
 }
