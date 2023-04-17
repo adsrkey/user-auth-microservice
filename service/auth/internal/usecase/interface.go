@@ -11,6 +11,7 @@ type User interface {
 }
 
 type UserAuth interface {
-	Auth(ctx context.Context, user *user.User) (*utils.SignedToken, error)
+	Login(ctx context.Context, user *user.User) (*utils.SignedToken, error)
+	Auth(ctx context.Context, token string) error
 	Register(ctx context.Context, user *user.User) error
 }

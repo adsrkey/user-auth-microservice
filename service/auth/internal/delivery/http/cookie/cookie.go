@@ -11,7 +11,7 @@ func JwtTokenCookie(token *utils.SignedToken) *http.Cookie {
 		Value:    token.Value,
 		Path:     "/",
 		Expires:  token.ExpiresAt,
-		Secure:   false,
+		Secure:   true,
 		HttpOnly: true,
 	}
 }

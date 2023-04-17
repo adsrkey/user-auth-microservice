@@ -2,8 +2,8 @@ package utils
 
 import (
 	"auth-service/service/auth/internal/repository/storage/postgres/dao"
-	"crypto/rand"
-	"io"
+	"context"
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
@@ -19,8 +19,8 @@ type JwtWrapper struct {
 
 type JwtClaims struct {
 	jwt.StandardClaims
-	ID    uuid.UUID
-	Email string
+	SessionID uuid.UUID
+	UserID    uuid.UUID
 }
 
 type SignedToken struct {
@@ -29,19 +29,16 @@ type SignedToken struct {
 }
 
 func (w *JwtWrapper) GenerateToken(user *dao.User) (*SignedToken, error) {
-	bytesGenSize := 32
-	randomBytes := make([]byte, bytesGenSize)
-
-	if _, err := io.ReadFull(rand.Reader, randomBytes); err != nil {
-		return nil, err
-	}
-
 	claims := &JwtClaims{
-		ID:    uuid.NewSHA1(user.ID, randomBytes),
-		Email: user.Email,
+		SessionID: uuid.New(),
+		UserID:    user.ID,
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Local().Add(time.Hour * time.Duration(w.ExpirationHours)).Unix(),
-			Issuer:    w.Issuer,
+			Audience:  user.ID.String(),
+			ExpiresAt: time.Now().Add(time.Hour * time.Duration(w.ExpirationHours)).Unix(),
+			//Id: ,
+			IssuedAt: time.Now().Unix(),
+			Issuer:   w.Issuer,
+			Subject:  "logged_in",
 		},
 	}
 
@@ -59,7 +56,13 @@ func (w *JwtWrapper) GenerateToken(user *dao.User) (*SignedToken, error) {
 	}, nil
 }
 
-func (w *JwtWrapper) ValidateToken(signedToken string) (claims *JwtClaims, err error) {
+func (w *JwtWrapper) ValidateToken(ctx context.Context, signedToken string) (claims *JwtClaims, err error) {
+	select {
+	case <-ctx.Done():
+		return nil, errors.New("context done")
+	default:
+	}
+
 	token, err := jwt.ParseWithClaims(
 		signedToken,
 		&JwtClaims{},
@@ -78,7 +81,7 @@ func (w *JwtWrapper) ValidateToken(signedToken string) (claims *JwtClaims, err e
 		return nil, ErrParseClaims
 	}
 
-	if claims.ExpiresAt < time.Now().Local().Unix() {
+	if claims.ExpiresAt < time.Now().Unix() {
 		return nil, ErrExpired
 	}
 

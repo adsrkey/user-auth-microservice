@@ -1,43 +1,26 @@
 package user
 
 import (
-	"auth-service/service/auth/internal/domain/user"
 	utils "auth-service/service/auth/utils/jwt"
 	"context"
-	"log"
-
-	"golang.org/x/crypto/bcrypt"
+	"fmt"
+	"time"
 )
 
-func (uc *UseCase) Auth(ctx context.Context, user *user.User) (*utils.SignedToken, error) {
-	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.MinCost)
-	if err != nil {
-		log.Println(err)
-	}
+func (uc *UseCase) Auth(ctx context.Context, token string) error {
+	ctx, cancel := context.WithTimeout(ctx, 50*time.Millisecond)
+	defer cancel()
 
-	user.Hash = hash
-
-	ucUser, err := uc.adapterStorage.GetUser(ctx, user)
-	if err != nil {
-		return nil, err
-	}
-
-	dayHours := 24
 	jwtWrapper := &utils.JwtWrapper{
-		SecretKey:       "jfaijfp3420",
-		Issuer:          "",
-		ExpirationHours: int64(dayHours),
+		SecretKey: uc.secretKey,
 	}
 
-	token, err := jwtWrapper.GenerateToken(ucUser)
+	validateToken, err := jwtWrapper.ValidateToken(ctx, token)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	err = bcrypt.CompareHashAndPassword(ucUser.Hash, []byte(user.Password))
-	if err != nil {
-		return nil, err
-	}
+	fmt.Printf("%v\n", validateToken)
 
-	return token, nil
+	return nil
 }

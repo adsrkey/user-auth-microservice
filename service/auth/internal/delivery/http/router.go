@@ -7,10 +7,11 @@ import (
 )
 
 const (
-	API      = "/api"
-	Version  = "/v1"
-	AuthPath = "/auth"
-	RegPath  = "/reg"
+	API       = "/api"
+	Version   = "/v1"
+	AuthPath  = "/auth"
+	LoginPath = "/login"
+	RegPath   = "/reg"
 )
 
 func (de *Delivery) initRouter() {
@@ -19,8 +20,8 @@ func (de *Delivery) initRouter() {
 	group.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
 		return middleware.ServerIsUnavailableHandlerFunc(de.ctx, next)
 	})
-	group.Use(middleware.ContentHandlerFunc)
 
 	group.POST(AuthPath, de.auth)
-	group.POST(RegPath, de.register)
+	group.POST(LoginPath, de.login, middleware.ContentHandlerFunc)
+	group.POST(RegPath, de.register, middleware.ContentHandlerFunc)
 }

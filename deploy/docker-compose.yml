@@ -34,6 +34,7 @@ services:
     environment:
       CONTEXT_KEY_REQUEST_ID: ok
 
+      SECRET_KEY: 3fsEBd^@a.Fw<m
       MIGRATIONS_DIR: service/auth/internal/repository/storage/postgres/migrations
       PGDATABASE: development
       PGHOST: postgres

@@ -42,5 +42,5 @@ func (de *Delivery) Shutdown(ctx context.Context) {
 
 	// ...
 
-	log.Println("Auth service is shutdown...")
+	log.Println("Login service is shutdown...")
 }
